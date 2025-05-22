@@ -43,8 +43,8 @@ export default function SupportAI() {
 		let sources: Sources = [];
 
 		await fetchEventSource(
-			"http://localhost:8010/proxy/devdocs/ask",
-			// "https://support-ai.cloudflaresupport.workers.dev/devdocs/ask",
+			// "http://localhost:8010/proxy/devdocs/ask",
+			"https://support-ai.cloudflaresupport.workers.dev/devdocs/ask",
 			{
 				method: "POST",
 				body: JSON.stringify({
