@@ -3,6 +3,7 @@ import Markdown from "react-markdown";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 
 type Messages = { role: "user" | "assistant"; content: string }[];
+type Sources = { title: string; file_path: string }[];
 
 function Messages({ messages }: { messages: Messages }) {
 	return (
@@ -39,9 +40,11 @@ export default function SupportAI() {
 		const { signal } = controller;
 
 		let chunkedAnswer = "";
+		let sources: Sources = [];
 
 		await fetchEventSource(
-			"https://support-ai.cloudflaresupport.workers.dev/devdocs/ask",
+			"http://localhost:8010/proxy/devdocs/ask",
+			// "https://support-ai.cloudflaresupport.workers.dev/devdocs/ask",
 			{
 				method: "POST",
 				body: JSON.stringify({
@@ -73,9 +76,26 @@ export default function SupportAI() {
 				onmessage(ev) {
 					if (ev.data === "[DONE]") {
 						controller.abort();
+
+						setMessages((messages) => {
+							const newMessages = [...messages];
+							newMessages[newMessages.length - 1].content += [
+								"\n\n",
+								"I used these sources to answer your question, please review them if you need more information:",
+								"\n\n",
+								sources
+									.map((source) => `- [${source.title}](${source.file_path})`)
+									.join("\n"),
+							].join("\n");
+							return newMessages;
+						});
 					}
 
-					const { threadId, response } = JSON.parse(ev.data);
+					const { threadId, response, botResponse } = JSON.parse(ev.data);
+
+					if (botResponse?.sources) {
+						sources = botResponse.sources;
+					}
 
 					if (threadId) {
 						setThreadId(threadId);
